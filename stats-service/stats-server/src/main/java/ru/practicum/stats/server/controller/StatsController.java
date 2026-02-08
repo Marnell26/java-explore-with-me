@@ -3,6 +3,7 @@ package ru.practicum.stats.server.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.EndpointHitDto;
@@ -21,6 +22,7 @@ public class StatsController {
     private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     @PostMapping("/hit")
+    @ResponseStatus(HttpStatus.CREATED)
     public EndpointHitDto addHit(@RequestBody @Valid EndpointHitDto endpointHitDto) {
         return statsService.addHit(endpointHitDto);
     }

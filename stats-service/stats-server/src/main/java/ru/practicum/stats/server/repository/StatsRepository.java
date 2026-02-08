@@ -2,6 +2,7 @@ package ru.practicum.stats.server.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.practicum.stats.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
 
@@ -10,20 +11,22 @@ import java.util.List;
 
 public interface StatsRepository extends JpaRepository<EndpointHit, Long> {
 
-    @Query("select new ru.practicum.ewm.stats.dto.ViewStatsDto(eh.app, eh.uri, count(eh)) " +
-            "from EndpointHit eh " +
-            "where eh.timestamp between :start and :end " +
-            "group by eh.app, eh.uri " +
-            "order by count(h) desc")
+    @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(eh.app, eh.uri, COUNT(eh.ip)) " +
+            "FROM EndpointHit eh " +
+            "WHERE eh.timestamp between :start AND :end " +
+            "AND (:uris IS NULL OR eh.uri IN :uris) " +
+            "GROUP BY eh.app, eh.uri " +
+            "ORDER BY count(eh.ip) DESC")
     List<ViewStatsDto> getStats(LocalDateTime start,
                                 LocalDateTime end,
                                 List<String> uris);
 
-    @Query("select new ru.practicum.ewm.stats.dto.ViewStatsDto(eh.app, eh.uri, count(distinct eh.ip)) " +
-            "from EndpointHit eh " +
-            "where eh.timestamp between :start and :end " +
-            "group by eh.app, eh.uri " +
-            "order by count(distinct eh.ip) desc")
+    @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(eh.app, eh.uri, COUNT(DISTINCT eh.ip)) " +
+            "FROM EndpointHit eh " +
+            "WHERE eh.timestamp BETWEEN :start AND :end " +
+            "AND (:uris IS NULL OR eh.uri IN :uris) " +
+            "GROUP BY eh.app, eh.uri " +
+            "ORDER BY count(DISTINCT eh.ip) DESC")
     List<ViewStatsDto> getUniqueStats(LocalDateTime start,
                                 LocalDateTime end,
                                 List<String> uris);

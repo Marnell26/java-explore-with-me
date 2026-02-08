@@ -20,20 +20,20 @@ public class StatsServiceImpl implements StatsService {
     private final StatsMapper statsMapper;
 
     @Override
+    @Transactional
     public EndpointHitDto addHit(EndpointHitDto endpointHitDto) {
-        EndpointHit endpointHit = statsMapper.toEndpointHit(endpointHitDto);
-        return statsMapper.toEndpointHitDto(statsRepository.save(endpointHit));
+        EndpointHit endpointHit = statsRepository.save(statsMapper.toEndpointHit(endpointHitDto));
+        return statsMapper.toEndpointHitDto(endpointHit);
     }
 
     @Override
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
 
-
-        if (unique) {
+        if (unique != null && unique) {
+            System.out.println("Результат: " + statsRepository.getUniqueStats(start, end, uris));
             return statsRepository.getUniqueStats(start, end, uris);
-        } else {
-            return statsRepository.getStats(start, end, uris);
         }
+        return statsRepository.getStats(start, end, uris);
 
     }
 }
