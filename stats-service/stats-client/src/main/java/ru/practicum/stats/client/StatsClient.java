@@ -39,19 +39,22 @@ public class StatsClient {
 
 
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        URI uri = UriComponentsBuilder
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder
                 .fromHttpUrl(serverUrl + "/stats")
                 .queryParam("start", start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .queryParam("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .queryParam("uris", uris.toArray())
-                .queryParam("unique", unique)
-                .build()
-                .toUri();
+                .queryParam("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
+        if (!uris.isEmpty()) {
+            uriComponentsBuilder.queryParam("uris", uris);
+        }
+
+        if (unique != null) {
+            uriComponentsBuilder.queryParam("unique", unique);
+        }
 
         return restClient
                 .get()
-                .uri(uri)
+                .uri(uriComponentsBuilder.build().toUri())
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<ViewStatsDto>>() {
                 });

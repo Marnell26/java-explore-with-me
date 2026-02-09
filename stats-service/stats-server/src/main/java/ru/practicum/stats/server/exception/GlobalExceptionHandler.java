@@ -13,14 +13,20 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MethodArgumentNotValidException.class, HandlerMethodValidationException.class})
-    public ErrorResponse handleJakartaValidationExceptions(MethodArgumentNotValidException exception) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         List<ValidationError> errors = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(error -> new ValidationError(error.getField(), error.getDefaultMessage()))
                 .toList();
         return new ErrorResponse("Ошибка валидации", errors);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ErrorResponse handleHandlerMethodValidationException(HandlerMethodValidationException exception) {
+        return new ErrorResponse(exception.getMessage());
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
