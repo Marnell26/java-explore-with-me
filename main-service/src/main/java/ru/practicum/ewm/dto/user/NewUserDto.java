@@ -1,0 +1,22 @@
+package ru.practicum.ewm.dto.user;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class NewUserDto {
+    @NotBlank
+    @Size(min = 2, max = 250, message = "Имя должно содержать от 2 до 250 символов.")
+    private String name;
+
+    @Email(message = "Некорректный формат email")
+    @NotBlank
+    @Size(min = 6, max = 254, message = "Адрес эл.почты должен содержать от 6 до 254 символов.")
+    private String email;
+}
