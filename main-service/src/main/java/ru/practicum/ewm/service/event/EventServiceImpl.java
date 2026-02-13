@@ -14,6 +14,7 @@ import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,7 +41,11 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventUpdateAdminRequest) {
-        return null;
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие не найдено"));
+
+        eventMapper.updateEvent(eventUpdateAdminRequest, event);
+        return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }
 
     @Override
@@ -85,6 +90,11 @@ public class EventServiceImpl implements EventService {
     }
 
     private long getEventView(Long eventId) {
+        List<String> uris = List.of("/events" + eventId);
+        LocalDateTime start = LocalDateTime.now().minusYears(10);
+        LocalDateTime end = LocalDateTime.now().plusHours(1);
+        List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
+        return stats.isEmpty() ? 0L : stats.getFirst().getHits();
     }
 }
