@@ -1,25 +1,56 @@
 package ru.practicum.ewm.mapper;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.event.UpdateEventAdminRequest;
+import org.mapstruct.*;
+import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.Event;
+import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.User;
+
+import java.time.LocalDateTime;
 
 @Mapper(componentModel = "spring")
 public interface EventMapper {
 
-    Event toEvent(NewEventDto newEventDto);
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "category", source = "category"),
+            @Mapping(target = "initiator", source = "user"),
+            @Mapping(target = "state", source = "state"),
+            @Mapping(target = "confirmedRequests", ignore = true),
+            @Mapping(target = "createdOn", source = "createdOn"),
+            @Mapping(target = "publishedOn", ignore = true),
+    })
+    Event toEvent(NewEventDto newEventDto, User user, Category category, EventState state, LocalDateTime createdOn);
 
     EventFullDto toEventFullDto(Event event, Long views);
 
     EventShortDto toEventShortDto(Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEvent(UpdateEventAdminRequest eventUpdateAdminRequest, @MappingTarget Event event);
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "category", source = "category"),
+            @Mapping(target = "initiator", ignore = true),
+            @Mapping(target = "state", ignore = true),
+            @Mapping(target = "confirmedRequests", ignore = true),
+            @Mapping(target = "createdOn", ignore = true),
+            @Mapping(target = "publishedOn", ignore = true),
+    })
+    void updateAdminEvent(UpdateEventAdminRequest eventUpdateAdminRequest, Category category,
+            @MappingTarget Event event);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "category", source = "category"),
+            @Mapping(target = "initiator", ignore = true),
+            @Mapping(target = "state", ignore = true),
+            @Mapping(target = "confirmedRequests", ignore = true),
+            @Mapping(target = "createdOn", ignore = true),
+            @Mapping(target = "publishedOn", ignore = true),
+    })
+    void updateUserEvent(UpdateEventUserRequest updateEventUserRequest, Category category,
+            @MappingTarget Event event);
 
 }

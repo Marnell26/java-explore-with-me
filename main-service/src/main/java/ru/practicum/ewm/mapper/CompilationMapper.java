@@ -8,11 +8,12 @@ import ru.practicum.ewm.model.Event;
 
 import java.util.Set;
 
+@AnnotateWith(GeneratedMapper.class)
 @Mapper(componentModel = "spring")
 public interface CompilationMapper {
 
     @Mappings({
-            @Mapping(target = "id", source = "newCompilationDto.id"),
+            @Mapping(target = "id", ignore = true),
             @Mapping(target = "events", source = "events")
     })
     Compilation toCompilation(NewCompilationDto newCompilationDto, Set<Event> events);
@@ -20,6 +21,11 @@ public interface CompilationMapper {
     CompilationDto toCompilationDto(Compilation compilation);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateCompilation(NewCompilationDto newCompilationDto, @MappingTarget Compilation compilation);
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "events", source = "events")
+    })
+    void updateCompilation(NewCompilationDto newCompilationDto, Set<Event> events,
+            @MappingTarget Compilation compilation);
 
 }

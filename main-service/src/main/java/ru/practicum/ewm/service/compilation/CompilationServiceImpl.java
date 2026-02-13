@@ -50,7 +50,11 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(Long compId, NewCompilationDto newCompilationDto) {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Подборка не найдена"));
-        compilationMapper.updateCompilation(newCompilationDto, compilation);
+        Set<Event> events = new HashSet<>();
+        if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
+            events.addAll(eventRepository.findAllById(newCompilationDto.getEvents()));
+        }
+        compilationMapper.updateCompilation(newCompilationDto, events, compilation);
         return compilationMapper.toCompilationDto(compilationRepository.save(compilation));
     }
 

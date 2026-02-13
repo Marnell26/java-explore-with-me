@@ -19,11 +19,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByCategoryId(Long categoryId);
 
+    Optional<Event> findByIdAndState(long eventId, EventState state);
+
     @Query("""
             SELECT e FROM Event e
-            WHERE (:useUsers = false OR e.initiator.id IN :users)
-              AND (:useStates = false OR e.state IN :states)
-              AND (:useCategories = false OR e.category.id IN :categories)
+            WHERE (:users = false OR e.initiator.id IN :users)
+              AND (:states = false OR e.state IN :states)
+              AND (:categories = false OR e.category.id IN :categories)
               AND e.eventDate >= :rangeStart
               AND e.eventDate <= :rangeEnd
             """)
@@ -33,6 +35,29 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("categories") List<Long> categories,
             @Param("rangeStart") LocalDateTime rangeStart,
             @Param("rangeEnd") LocalDateTime rangeEnd,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT e FROM Event e
+            WHERE e.state = :state
+              AND (
+                   LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
+                OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+              )
+              AND (:categories IS NULL OR e.category.id IN :categories)
+              AND (:paid IS NULL OR e.paid = :paid)
+              AND e.eventDate BETWEEN :rangeStart AND :rangeEnd
+              AND (:onlyAvailable IS NULL OR :onlyAvailable = false)
+            """)
+    List<Event> findEvents(
+            @Param("text") String text,
+            @Param("categories") List<Long> categories,
+            @Param("paid") Boolean paid,
+            @Param("rangeStart") LocalDateTime rangeStart,
+            @Param("rangeEnd") LocalDateTime rangeEnd,
+            @Param("onlyAvailable") Boolean onlyAvailable,
+            @Param("state") EventState state,
             Pageable pageable
     );
 

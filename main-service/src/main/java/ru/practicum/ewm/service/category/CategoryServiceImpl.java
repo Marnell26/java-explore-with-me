@@ -36,7 +36,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Long catId) {
-        if (eventRepository.findByCategoryId(catId).isPresent()) {
+        if (!eventRepository.findByCategoryId(catId).isEmpty()) {
             throw new ConflictException("С данной категорией есть связанные события");
         }
         categoryRepository.deleteById(catId);
@@ -47,9 +47,6 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto updateCategory(Long catId, NewCategoryDto newCategoryDto) {
         Category category = categoryRepository.findById(catId).orElseThrow(() -> new NotFoundException("Категория не " +
                 "найдена"));
-        if (categoryRepository.findByName(newCategoryDto.getName()).isPresent()) {
-            throw new ConflictException("Категория с таким именем уже существует");
-        }
         categoryMapper.updateCategory(newCategoryDto, category);
         return categoryMapper.toCategoryDto(categoryRepository.save(category));
     }

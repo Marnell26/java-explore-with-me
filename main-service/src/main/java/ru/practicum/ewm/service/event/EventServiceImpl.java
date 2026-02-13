@@ -9,11 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
+import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.Event;
+import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
@@ -33,9 +37,17 @@ public class EventServiceImpl implements EventService {
     private final StatsClient statsClient;
 
     @Override
-    public List<EventFullDto> getAdminEvents(List<Long> userIds, List<String> states, List<Long> categories,
+    public List<EventFullDto> getAdminEvents(List<Long> users, List<String> states, List<Long> categories,
             LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable) {
-        return List.of();
+        List<EventState> eventStates = states.stream()
+                .map(EventState::valueOf)
+                .toList();
+        List<Event> events = eventRepository.findAdminEvents(users, eventStates, categories, rangeStart, rangeEnd,
+                pageable);
+
+        return events.stream()
+                .map(event -> eventMapper.toEventFullDto(event, getEventView(event.getId())))
+                .toList();
     }
 
     @Override
@@ -43,8 +55,9 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventUpdateAdminRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
-
-        eventMapper.updateEvent(eventUpdateAdminRequest, event);
+        Category category = categoryRepository.findById(eventUpdateAdminRequest.getCategory())
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+        eventMapper.updateAdminEvent(eventUpdateAdminRequest, category, event);
         return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }
 
@@ -68,25 +81,50 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto addEvent(Long userId, NewEventDto newEventDto) {
-        return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        Category category = categoryRepository.findById(newEventDto.getCategory())
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+        Event event = eventMapper.toEvent(newEventDto, user, category, EventState.PENDING, LocalDateTime.now());
+        return eventMapper.toEventFullDto(eventRepository.save(event), null);
     }
 
     @Override
     @Transactional
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest eventUpdateUserRequest) {
-        return null;
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие не найдено"));
+        Category category = categoryRepository.findById(eventUpdateUserRequest.getCategory())
+                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+        eventMapper.updateUserEvent(eventUpdateUserRequest, category, event);
+
+        return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }
 
     @Override
-    public List<EventShortDto> getPublicEvents(String text, List<Long> categoryIds, Boolean paid,
-            LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, int from, int size,
+    public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
+            LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Pageable pageable,
             HttpServletRequest request) {
-        return List.of();
+
+        addHit(request);
+
+        List<Event> events = eventRepository.findEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
+                EventState.PUBLISHED, pageable);
+
+        return events.stream()
+                .map(eventMapper::toEventShortDto)
+                .toList();
     }
 
     @Override
-    public EventFullDto getPublicEvent(Long id, HttpServletRequest request) {
-        return null;
+    public EventFullDto getPublicEvent(Long eventId, HttpServletRequest request) {
+        Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
+                .orElseThrow(() -> new NotFoundException("Событие не найдено"));
+
+        addHit(request);
+
+        return eventMapper.toEventFullDto(event, getEventView(eventId));
     }
 
     private long getEventView(Long eventId) {
@@ -96,5 +134,14 @@ public class EventServiceImpl implements EventService {
         List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
         return stats.isEmpty() ? 0L : stats.getFirst().getHits();
+    }
+
+    private void addHit(HttpServletRequest request) {
+        statsClient.addHit(EndpointHitDto.builder()
+                .app(appName)
+                .uri(request.getRequestURI())
+                .ip(request.getRemoteAddr())
+                .timestamp(LocalDateTime.now())
+                .build());
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.request.ParticipationRequestDto;
 import ru.practicum.ewm.dto.request.RequestStatusUpdateRequest;
 import ru.practicum.ewm.dto.request.RequestStatusUpdateResult;
+import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.RequestMapper;
@@ -17,6 +18,7 @@ import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,12 +43,20 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        checkUser(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
-        ParticipationRequest participationRequest = requestMapper.toParticipationRequest(user, event);
 
-        return requestMapper.toParticipationRequestDto(requestRepository.save(request));
+        int limit = event.getParticipantLimit();
+        if (limit > 0 && limit <= requestRepository.countByEventIdAndStatus(event.getId(), RequestStatus.CONFIRMED)) {
+            throw new ConflictException("Достигнут лимит участников");
+        }
+        RequestStatus status = event.isRequestModeration() ? RequestStatus.PENDING : RequestStatus.CONFIRMED;
+        ParticipationRequest participationRequest = requestMapper.toParticipationRequest(event, user, status,
+                LocalDateTime.now());
+
+        return requestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
     }
 
     @Override
@@ -86,15 +96,40 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public RequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId,
-                                                         RequestStatusUpdateRequest requestStatusUpdateRequest) {
+            RequestStatusUpdateRequest requestStatusUpdateRequest) {
         checkUser(userId);
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ForbiddenException("Статус запроса может менять только инициатор события");
         }
+        List<ParticipationRequest> requests = requestRepository.findAllById(requestStatusUpdateRequest.getRequestIds());
+        RequestStatus newStatus = requestStatusUpdateRequest.getStatus();
 
-        return null;
+        if (newStatus == RequestStatus.CONFIRMED
+                && event.getConfirmedRequests() + requests.size() > event.getParticipantLimit()) {
+            throw new ConflictException("Достигнут лимит участников");
+        }
+
+        requests.forEach(r -> r.setStatus(newStatus));
+        requestRepository.saveAll(requests);
+
+        RequestStatusUpdateResult updateResult = new RequestStatusUpdateResult();
+        if (newStatus == RequestStatus.CONFIRMED) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + requests.size());
+            eventRepository.save(event);
+            updateResult.getConfirmedRequests().addAll(requests.stream()
+                    .map(requestMapper::toParticipationRequestDto)
+                    .toList());
+        } else if (newStatus == RequestStatus.REJECTED) {
+            updateResult.getRejectedRequests().addAll(requests.stream()
+                    .map(requestMapper::toParticipationRequestDto)
+                    .toList());
+        } else {
+            throw new ConflictException("Указан неверный статус");
+        }
+
+        return updateResult;
     }
 
     private void checkUser(Long userId) {
