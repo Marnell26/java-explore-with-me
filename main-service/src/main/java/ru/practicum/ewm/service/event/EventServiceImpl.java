@@ -9,10 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
-import ru.practicum.ewm.model.Category;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.EventState;
-import ru.practicum.ewm.model.User;
+import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
@@ -21,6 +18,7 @@ import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -38,26 +36,43 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getAdminEvents(List<Long> users, List<String> states, List<Long> categories,
-            LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable) {
-        List<EventState> eventStates = states.stream()
-                .map(EventState::valueOf)
-                .toList();
+                                             LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable) {
+        List<EventState> eventStates = null;
+        if (states != null) {
+            eventStates = states.stream()
+                    .map(EventState::valueOf)
+                    .toList();
+        }
         List<Event> events = eventRepository.findAdminEvents(users, eventStates, categories, rangeStart, rangeEnd,
                 pageable);
 
         return events.stream()
-                .map(event -> eventMapper.toEventFullDto(event, getEventView(event.getId())))
+                .map(event -> eventMapper.toEventFullDto(event, null))
                 .toList();
     }
 
     @Override
     @Transactional
-    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventUpdateAdminRequest) {
+    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
-        Category category = categoryRepository.findById(eventUpdateAdminRequest.getCategory())
-                .orElseThrow(() -> new NotFoundException("Категория не найдена"));
-        eventMapper.updateAdminEvent(eventUpdateAdminRequest, category, event);
+        Category category = null;
+        if (updateEventAdminRequest.getCategory() != null) {
+            category = categoryRepository.findById(updateEventAdminRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+        }
+
+        EventStateAction eventStateAction = updateEventAdminRequest.getEventStateAction();
+        if (eventStateAction == null) {
+            event.setState(EventState.PENDING);
+        } else if (eventStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            event.setState(EventState.PUBLISHED);
+            event.setPublishedOn(LocalDateTime.now());
+        } else if (eventStateAction.equals(EventStateAction.REJECT_EVENT)) {
+            event.setState(EventState.CANCELED);
+        }
+
+        eventMapper.updateAdminEvent(updateEventAdminRequest, category, event);
         return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }
 
@@ -104,8 +119,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-            LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Pageable pageable,
-            HttpServletRequest request) {
+                                               LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Pageable pageable,
+                                               HttpServletRequest request) {
 
         addHit(request);
 
@@ -129,7 +144,8 @@ public class EventServiceImpl implements EventService {
 
     private long getEventView(Long eventId) {
         List<String> uris = List.of("/events" + eventId);
-        LocalDateTime start = LocalDateTime.now().minusYears(10);
+        LocalDateTime start = LocalDateTime.parse("2026-02-09 12:00:00",
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         LocalDateTime end = LocalDateTime.now().plusHours(1);
         List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
@@ -137,11 +153,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private void addHit(HttpServletRequest request) {
-        statsClient.addHit(EndpointHitDto.builder()
+        EndpointHitDto endpointHitDto = EndpointHitDto.builder()
                 .app(appName)
                 .uri(request.getRequestURI())
                 .ip(request.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
-                .build());
+                .build();
+        statsClient.addHit(endpointHitDto);
     }
 }
