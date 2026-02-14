@@ -1,12 +1,14 @@
 package ru.practicum.ewm.service.event;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.*;
@@ -62,17 +64,25 @@ public class EventServiceImpl implements EventService {
                     .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         }
 
+        EventState state = event.getState();
+
         EventStateAction eventStateAction = updateEventAdminRequest.getEventStateAction();
-        if (eventStateAction == null) {
-            event.setState(EventState.PENDING);
-        } else if (eventStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            event.setState(EventState.PUBLISHED);
-            event.setPublishedOn(LocalDateTime.now());
-        } else if (eventStateAction.equals(EventStateAction.REJECT_EVENT)) {
-            event.setState(EventState.CANCELED);
+
+        if (event.getEventDate().minusHours(2L).isBefore(LocalDateTime.now())) {
+            throw new ConflictException("Событие можно изменить не позднее чем за 1 час до начала");
         }
 
-        eventMapper.updateAdminEvent(updateEventAdminRequest, category, event);
+        if (eventStateAction == null) {
+            throw new ValidationException("Некорректное состояние");
+        }
+
+        if (eventStateAction == EventStateAction.PUBLISH_EVENT) {
+            state = EventState.PUBLISHED;
+        } else if (eventStateAction == EventStateAction.REJECT_EVENT) {
+            state = EventState.CANCELED;
+        }
+
+        eventMapper.updateAdminEvent(updateEventAdminRequest, category, state, event);
         return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }
 
@@ -112,7 +122,30 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         Category category = categoryRepository.findById(eventUpdateUserRequest.getCategory())
                 .orElseThrow(() -> new NotFoundException("Категория не найдена"));
-        eventMapper.updateUserEvent(eventUpdateUserRequest, category, event);
+
+        EventState state = event.getState();
+
+        if (state == EventState.PUBLISHED) {
+            throw new ConflictException("Нельзя изменить опубликованное событие");
+        }
+
+        if (event.getEventDate().minusHours(2L).isBefore(LocalDateTime.now())) {
+            throw new ConflictException("Событие можно изменить не позднее чем за 2 часа до начала");
+        }
+
+        EventStateAction eventStateAction = eventUpdateUserRequest.getEventStateAction();
+
+        if (eventStateAction == null) {
+            throw new ValidationException("Некорректное состояние");
+        }
+
+        if (eventStateAction == EventStateAction.PUBLISH_EVENT) {
+            state = EventState.PUBLISHED;
+        } else if (eventStateAction == EventStateAction.REJECT_EVENT) {
+            state = EventState.CANCELED;
+        }
+
+        eventMapper.updateUserEvent(eventUpdateUserRequest, category, state, event);
 
         return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(eventId));
     }

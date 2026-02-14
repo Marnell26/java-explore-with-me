@@ -32,12 +32,12 @@ public interface EventMapper {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "category", source = "category"),
             @Mapping(target = "initiator", ignore = true),
-            @Mapping(target = "state", ignore = true),
+            @Mapping(target = "state", source = "state"),
             @Mapping(target = "confirmedRequests", ignore = true),
             @Mapping(target = "createdOn", ignore = true),
             @Mapping(target = "publishedOn", ignore = true),
     })
-    void updateAdminEvent(UpdateEventAdminRequest eventUpdateAdminRequest, Category category,
+    void updateAdminEvent(UpdateEventAdminRequest eventUpdateAdminRequest, Category category, EventState state,
             @MappingTarget Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -45,12 +45,12 @@ public interface EventMapper {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "category", source = "category"),
             @Mapping(target = "initiator", ignore = true),
-            @Mapping(target = "state", ignore = true),
+            @Mapping(target = "state", source = "state"),
             @Mapping(target = "confirmedRequests", ignore = true),
             @Mapping(target = "createdOn", ignore = true),
             @Mapping(target = "publishedOn", ignore = true),
     })
-    void updateUserEvent(UpdateEventUserRequest updateEventUserRequest, Category category,
+    void updateUserEvent(UpdateEventUserRequest updateEventUserRequest, Category category, EventState state,
             @MappingTarget Event event);
 
 }
