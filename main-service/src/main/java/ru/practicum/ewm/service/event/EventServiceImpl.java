@@ -1,7 +1,6 @@
 package ru.practicum.ewm.service.event;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
@@ -73,7 +72,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (eventStateAction == null) {
-            throw new ValidationException("Некорректное состояние");
+            state = EventState.PENDING;
         }
 
         if (eventStateAction == EventStateAction.PUBLISH_EVENT) {
@@ -136,7 +135,7 @@ public class EventServiceImpl implements EventService {
         EventStateAction eventStateAction = eventUpdateUserRequest.getEventStateAction();
 
         if (eventStateAction == null) {
-            throw new ValidationException("Некорректное состояние");
+            state = EventState.PENDING;
         }
 
         if (eventStateAction == EventStateAction.PUBLISH_EVENT) {
