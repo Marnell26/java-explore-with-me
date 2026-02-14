@@ -22,13 +22,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByIdAndState(long eventId, EventState state);
 
     @Query("""
-            SELECT e FROM Event e
-             WHERE (:users IS NULL OR e.initiator.id IN :users)
-               AND (:states IS NULL OR e.state IN :states)
-               AND (:categories IS NULL OR e.category.id IN :categories)
-               AND e.eventDate >= COALESCE(:rangeStart, e.eventDate)
-               AND e.eventDate <= COALESCE(:rangeEnd,   e.eventDate)
-             ORDER BY e.id
+            SELECT e 
+              FROM Event e
+            WHERE (:users IS NULL OR e.initiator.id IN :users)
+              AND (:states IS NULL OR e.state IN :states)
+              AND (:categories IS NULL OR e.category.id IN :categories)
+              AND e.eventDate >= COALESCE(:rangeStart, e.eventDate)
+              AND e.eventDate <= COALESCE(:rangeEnd,   e.eventDate)
+            ORDER BY e.id
             """)
     List<Event> findAdminEvents(
             @Param("users") List<Long> users,
