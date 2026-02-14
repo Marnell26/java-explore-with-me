@@ -1,9 +1,12 @@
 package ru.practicum.ewm.service.event;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.event.*;
@@ -20,7 +23,10 @@ import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,8 +53,10 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findAdminEvents(users, eventStates, categories, rangeStart, rangeEnd,
                 pageable);
 
+        Map<Long, Long> views = getEventsView(events.stream().map(Event::getId).toList());
+
         return events.stream()
-                .map(event -> eventMapper.toEventFullDto(event, null))
+                .map(event -> eventMapper.toEventFullDto(event, views.get(event.getId())))
                 .toList();
     }
 
@@ -88,7 +96,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Pageable pageable) {
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        return eventRepository.findAllByInitiatorId(userId, pageable)
+        List<Event> events = eventRepository.findAllByInitiatorId(userId, pageable);
+        Map<Long, Long> views = getEventsView(events.stream().map(Event::getId).toList());
+        return events
                 .stream()
                 .map(eventMapper::toEventShortDto)
                 .toList();
@@ -110,7 +120,8 @@ public class EventServiceImpl implements EventService {
         Category category = categoryRepository.findById(newEventDto.getCategory())
                 .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         Event event = eventMapper.toEvent(newEventDto, user, category, EventState.PENDING, LocalDateTime.now());
-        return eventMapper.toEventFullDto(eventRepository.save(event), null);
+
+        return eventMapper.toEventFullDto(eventRepository.save(event), getEventView(event.getId()));
     }
 
     @Override
@@ -152,7 +163,22 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
-                                               String sort, Pageable pageable, HttpServletRequest request) {
+                                               String sort, int from, int size, HttpServletRequest request) {
+
+        if (rangeStart != null && rangeEnd != null && !rangeStart.isBefore(rangeEnd)) {
+            throw new ValidationException("Дата начала должна быть раньше даты окончания события");
+        }
+
+        Pageable pageable;
+        if (sort == null) {
+            pageable = PageRequest.of(from / size, size, Sort.by("id").ascending());
+        } else if (sort.equalsIgnoreCase("VIEWS")) {
+            pageable = PageRequest.of(from / size, size, Sort.by("views").ascending());
+        } else if (sort.equalsIgnoreCase("EVENT_DATE")) {
+            pageable = PageRequest.of(from / size, size, Sort.by("eventDate").ascending());
+        } else {
+            throw new ValidationException("Указан некорректный вариант сортировки");
+        }
 
         addHit(request);
 
@@ -176,12 +202,37 @@ public class EventServiceImpl implements EventService {
 
     private long getEventView(Long eventId) {
         List<String> uris = List.of("/events" + eventId);
-        LocalDateTime start = LocalDateTime.parse("2026-02-09 12:00:00",
+
+        LocalDateTime start = LocalDateTime.parse("2026-01-01 12:00:00",
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        LocalDateTime end = LocalDateTime.now().plusHours(1);
+        LocalDateTime end = LocalDateTime.now();
+
         List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
         return stats.isEmpty() ? 0L : stats.getFirst().getHits();
+    }
+
+    private Map<Long, Long> getEventsView(List<Long> ids) {
+        List<String> uris = ids.stream()
+                .map(id -> "/events/" + id)
+                .toList();
+
+        LocalDateTime start = LocalDateTime.parse("2026-01-01 12:00:00",
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        LocalDateTime end = LocalDateTime.now();
+
+        List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, false);
+
+        if (stats.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        return stats.stream()
+                .map(viewStatsDto -> {
+                    String eventIdStr = viewStatsDto.getUri().substring("/events/".length());
+                    Long eventId = Long.parseLong(eventIdStr);
+                    return Map.entry(eventId, viewStatsDto.getHits());
+                }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void addHit(HttpServletRequest request) {

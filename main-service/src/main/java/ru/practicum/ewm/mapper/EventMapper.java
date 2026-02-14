@@ -23,7 +23,8 @@ public interface EventMapper {
     })
     Event toEvent(NewEventDto newEventDto, User user, Category category, EventState state, LocalDateTime createdOn);
 
-    EventFullDto toEventFullDto(Event event, Long views);
+
+    EventFullDto toEventFullDto(Event event, long views);
 
     EventShortDto toEventShortDto(Event event);
 

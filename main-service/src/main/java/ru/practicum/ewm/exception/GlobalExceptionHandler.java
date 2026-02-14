@@ -1,5 +1,6 @@
 package ru.practicum.ewm.exception;
 
+import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -59,6 +60,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenException.class)
     public ErrorResponse handleForbiddenException(ForbiddenException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    public ErrorResponse handleValidationException(ValidationException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 

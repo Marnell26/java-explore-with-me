@@ -23,7 +23,7 @@ public interface EventService {
     EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest eventUpdateUserRequest);
 
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-            LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Pageable pageable, HttpServletRequest request);
+                                        LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, int from, int size, HttpServletRequest request);
 
     EventFullDto getPublicEvent(Long eventId, HttpServletRequest request);
 }

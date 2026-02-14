@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS events (
   participant_limit INTEGER,
   published_on TIMESTAMP WITHOUT TIME ZONE,
   request_moderation boolean,
-  state VARCHAR(32)
+  state VARCHAR(32),
+  views BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS compilations_events (
