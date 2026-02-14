@@ -1,5 +1,3 @@
-FROM eclipse-temurin:21-jdk-alpine
-
-COPY target/*.jar app.jar
-
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+FROM eclipse-temurin:21-jre-jammy
+COPY target/*.jar stats-server.jar
+ENTRYPOINT ["java", "-jar", "/stats-server.jar"]
