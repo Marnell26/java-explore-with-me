@@ -88,7 +88,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto getEventByUser(Long userId, Long eventId) {
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         return eventMapper.toEventFullDto(event, getEventView(eventId));
     }
@@ -119,8 +119,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
-                                               LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, Pageable pageable,
-                                               HttpServletRequest request) {
+                                               LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
+                                               String sort, Pageable pageable, HttpServletRequest request) {
 
         addHit(request);
 

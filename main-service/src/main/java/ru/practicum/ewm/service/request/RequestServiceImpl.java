@@ -82,7 +82,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId) {
         checkUser(userId);
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ForbiddenException("Запросы может просматривать только инициатор события");
@@ -98,7 +98,7 @@ public class RequestServiceImpl implements RequestService {
     public RequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId,
             RequestStatusUpdateRequest requestStatusUpdateRequest) {
         checkUser(userId);
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ForbiddenException("Статус запроса может менять только инициатор события");

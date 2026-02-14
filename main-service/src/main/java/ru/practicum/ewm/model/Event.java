@@ -1,5 +1,6 @@
 package ru.practicum.ewm.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "events")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

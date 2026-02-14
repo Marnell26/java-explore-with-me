@@ -1,5 +1,6 @@
 package ru.practicum.stats.server.exception;
 
+import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -34,6 +35,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ErrorResponse handleMissingServletRequestParameterException(
             MissingServletRequestParameterException exception) {
+        return new ErrorResponse(exception.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ValidationException.class)
+    public ErrorResponse handleValidationException(ValidationException exception) {
         return new ErrorResponse(exception.getMessage());
     }
 
