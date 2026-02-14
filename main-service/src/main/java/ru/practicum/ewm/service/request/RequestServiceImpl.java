@@ -10,10 +10,7 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.RequestMapper;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.ParticipationRequest;
-import ru.practicum.ewm.model.RequestStatus;
-import ru.practicum.ewm.model.User;
+import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
@@ -48,6 +45,18 @@ public class RequestServiceImpl implements RequestService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
 
+        if (requestRepository.findByRequesterIdAndEventId(userId, eventId).isPresent()) {
+            throw new ConflictException("Запрос уже создан");
+        }
+
+        if (Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new ConflictException("Нельзя подать заявку на свое событие");
+        }
+
+        if (event.getState() != EventState.PUBLISHED) {
+            throw new ConflictException("Событие еще не опубликовано");
+        }
+
         int limit = event.getParticipantLimit();
         if (limit > 0 && limit <= requestRepository.countByEventIdAndStatus(event.getId(), RequestStatus.CONFIRMED)) {
             throw new ConflictException("Достигнут лимит участников");
@@ -55,6 +64,15 @@ public class RequestServiceImpl implements RequestService {
         RequestStatus status = event.isRequestModeration() ? RequestStatus.PENDING : RequestStatus.CONFIRMED;
         ParticipationRequest participationRequest = requestMapper.toParticipationRequest(event, user, status,
                 LocalDateTime.now());
+
+        if (event.getParticipantLimit() == 0) {
+            participationRequest.setStatus(RequestStatus.CONFIRMED);
+        }
+
+        if (participationRequest.getStatus() == RequestStatus.CONFIRMED) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            eventRepository.save(event);
+        }
 
         return requestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
     }
@@ -76,6 +94,7 @@ public class RequestServiceImpl implements RequestService {
             eventRepository.save(event);
         }
 
+        participationRequest.setStatus(RequestStatus.CANCELED);
         return requestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
     }
 
@@ -96,14 +115,22 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public RequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId,
-            RequestStatusUpdateRequest requestStatusUpdateRequest) {
+                                                         RequestStatusUpdateRequest requestStatusUpdateRequest) {
         checkUser(userId);
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ForbiddenException("Статус запроса может менять только инициатор события");
         }
+
         List<ParticipationRequest> requests = requestRepository.findAllById(requestStatusUpdateRequest.getRequestIds());
+
+        if (requests.stream()
+                .anyMatch(req -> !Objects.equals(req.getEvent().getId(), eventId)
+                        || req.getStatus() != RequestStatus.PENDING)) {
+            throw new ConflictException("Не все запросы из списка относятся к событию или не в статусе PENDING");
+        }
+
         RequestStatus newStatus = requestStatusUpdateRequest.getStatus();
 
         if (newStatus == RequestStatus.CONFIRMED

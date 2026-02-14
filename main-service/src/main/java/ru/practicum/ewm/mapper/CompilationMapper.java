@@ -3,6 +3,7 @@ package ru.practicum.ewm.mapper;
 import org.mapstruct.*;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.dto.compilation.NewCompilationDto;
+import ru.practicum.ewm.dto.compilation.UpdateCompilationDto;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.Event;
 
@@ -25,7 +26,7 @@ public interface CompilationMapper {
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "events", source = "events")
     })
-    void updateCompilation(NewCompilationDto newCompilationDto, Set<Event> events,
-            @MappingTarget Compilation compilation);
+    void updateCompilation(UpdateCompilationDto updateCompilationDto, Set<Event> events,
+                           @MappingTarget Compilation compilation);
 
 }
