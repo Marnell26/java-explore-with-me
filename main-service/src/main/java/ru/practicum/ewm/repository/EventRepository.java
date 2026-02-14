@@ -22,14 +22,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByIdAndState(long eventId, EventState state);
 
     @Query("""
-            SELECT e 
+            SELECT e
               FROM Event e
-            WHERE (:users IS NULL OR e.initiator.id IN :users)
-              AND (:states IS NULL OR e.state IN :states)
-              AND (:categories IS NULL OR e.category.id IN :categories)
-              AND e.eventDate >= COALESCE(:rangeStart, e.eventDate)
-              AND e.eventDate <= COALESCE(:rangeEnd,   e.eventDate)
-            ORDER BY e.id
+             WHERE (:users IS NULL OR e.initiator.id IN :users)
+               AND (:states IS NULL OR e.state IN :states)
+               AND (:categories IS NULL OR e.category.id IN :categories)
+               AND e.eventDate >= COALESCE(:rangeStart, e.eventDate)
+               AND e.eventDate <= COALESCE(:rangeEnd,   e.eventDate)
+             ORDER BY e.id
             """)
     List<Event> findAdminEvents(
             @Param("users") List<Long> users,
@@ -41,16 +41,23 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     @Query("""
-            SELECT e FROM Event e
-            WHERE e.state = :state
-              AND (
-                   LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
-                OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
-              )
-              AND (:categories IS NULL OR e.category.id IN :categories)
-              AND (:paid IS NULL OR e.paid = :paid)
-              AND e.eventDate BETWEEN :rangeStart AND :rangeEnd
-              AND (:onlyAvailable IS NULL OR :onlyAvailable = false)
+            SELECT e
+              FROM Event e
+             WHERE e.state = :state
+               AND (:text IS NULL
+                    OR (LOWER(e.annotation) LIKE %:text%
+                        OR LOWER(e.description) LIKE %:text%
+                    )
+               )
+               AND (:categories IS NULL OR e.category.id IN :categories)
+               AND (:paid IS NULL OR e.paid = :paid)
+               AND e.eventDate >= COALESCE(:rangeStart, e.eventDate)
+               AND e.eventDate <= COALESCE(:rangeEnd,   e.eventDate)
+               AND (:onlyAvailable IS NULL
+                    OR :onlyAvailable = false
+                    OR COALESCE(e.participantLimit, 0) = 0
+                    OR COALESCE(e.confirmedRequests, 0) < COALESCE(e.participantLimit, 0)
+               )
             """)
     List<Event> findEvents(
             @Param("text") String text,
