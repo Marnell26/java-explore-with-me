@@ -32,11 +32,11 @@ services:
     ports:
       - "5432:5432"
 
-  ewm-service:
+  main-service:
     build:
       context: ./main-service
       dockerfile: Dockerfile
-    container_name: ewm-service
+    container_name: main-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://ewm-db:5432/ewm
       SPRING_DATASOURCE_USERNAME: user
