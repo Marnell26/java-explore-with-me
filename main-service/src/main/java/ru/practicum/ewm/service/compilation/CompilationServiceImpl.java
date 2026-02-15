@@ -1,7 +1,6 @@
 package ru.practicum.ewm.service.compilation;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,11 +67,11 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Pageable pageable) {
-        Page<Compilation> compilations;
+        List<Compilation> compilations;
         if (pinned != null) {
             compilations = compilationRepository.findByPinned(pinned, pageable);
         } else {
-            compilations = compilationRepository.findAll(pageable);
+            compilations = compilationRepository.findAll();
         }
         return compilations.stream()
                 .map(compilationMapper::toCompilationDto)

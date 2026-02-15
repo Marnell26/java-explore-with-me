@@ -15,6 +15,8 @@ import ru.practicum.ewm.service.event.EventService;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static ru.practicum.ewm.constant.Constants.DATE_TIME_FORMAT;
+
 @RestController
 @RequestMapping("/admin/events")
 @RequiredArgsConstructor
@@ -26,8 +28,8 @@ public class AdminEventController {
     public List<EventFullDto> getAdminEvents(@RequestParam(required = false) List<Long> users,
                                              @RequestParam(required = false) List<EventState> states,
             @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+                                             @RequestParam(required = false) @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeStart,
+                                             @RequestParam(required = false) @DateTimeFormat(pattern = DATE_TIME_FORMAT) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size) {
         return eventService.getAdminEvents(users, states, categories, rangeStart, rangeEnd,

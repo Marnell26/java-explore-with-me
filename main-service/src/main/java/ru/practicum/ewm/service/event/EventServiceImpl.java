@@ -23,7 +23,10 @@ import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.model.EventStateAction.*;
@@ -233,7 +236,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                                LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
-                                               String sort, int from, int size, HttpServletRequest request) {
+                                               SortState sort, int from, int size, HttpServletRequest request) {
 
         if (rangeStart != null && rangeEnd != null && rangeEnd.isBefore(rangeStart)) {
             throw new ValidationException("Дата окончания не может быть раньше даты начала");
@@ -246,13 +249,14 @@ public class EventServiceImpl implements EventService {
         Pageable pageable;
         if (sort == null) {
             pageable = PageRequest.of(from / size, size, Sort.by("id").ascending());
-        } else if (sort.equalsIgnoreCase("VIEWS")) {
+        } else if (sort == SortState.VIEWS) {
             pageable = PageRequest.of(from / size, size, Sort.by("views").ascending());
-        } else if (sort.equalsIgnoreCase("EVENT_DATE")) {
+        } else if (sort == SortState.EVENT_DATE) {
             pageable = PageRequest.of(from / size, size, Sort.by("eventDate").ascending());
         } else {
             throw new ValidationException("Указан некорректный вариант сортировки");
         }
+
 
         addHit(request);
 
@@ -332,13 +336,6 @@ public class EventServiceImpl implements EventService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-        if ("VIEWS".equalsIgnoreCase(sort)) {
-            result.sort(Comparator.comparing(
-                    EventShortDto::getViews,
-                    Comparator.nullsFirst(Long::compareTo)
-            ).reversed());
-        }
 
         return result;
     }

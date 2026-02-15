@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.SortState;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +25,7 @@ public interface EventService {
     EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest eventUpdateUserRequest);
 
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid, LocalDateTime rangeStart,
-                                        LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, int from, int size, HttpServletRequest request);
+                                        LocalDateTime rangeEnd, Boolean onlyAvailable, SortState sort, int from, int size, HttpServletRequest request);
 
     EventFullDto getPublicEvent(Long eventId, HttpServletRequest request);
 }

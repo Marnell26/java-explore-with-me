@@ -12,6 +12,8 @@ import ru.practicum.ewm.model.EventStateAction;
 
 import java.time.LocalDateTime;
 
+import static ru.practicum.ewm.constant.Constants.DATE_TIME_FORMAT;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,7 +31,7 @@ public class UpdateEventAdminRequest {
 
     private Long category;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
 
     private LocationDto location;
