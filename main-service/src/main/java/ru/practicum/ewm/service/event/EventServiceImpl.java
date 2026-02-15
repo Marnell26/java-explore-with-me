@@ -25,6 +25,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ru.practicum.ewm.model.EventStateAction.PUBLISH_EVENT;
+import static ru.practicum.ewm.model.EventStateAction.REJECT_EVENT;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -117,31 +120,29 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
 
         if (eventUpdateAdminRequest.getStateAction() != null) {
-            switch (eventUpdateAdminRequest.getStateAction()) {
-                case PUBLISH_EVENT -> {
-                    if (event.getState() == EventState.PUBLISHED) {
-                        throw new ConflictException("Событие уже опубликовано и не может быть опубликовано повторно");
-                    }
-                    if (event.getState() == EventState.CANCELED) {
-                        throw new ConflictException("Нельзя опубликовать отменённое событие");
-                    }
-                    if (event.getState() != EventState.PENDING) {
-                        throw new ConflictException("Публиковать можно только события в статусе PENDING");
-                    }
-                    event.setState(EventState.PUBLISHED);
-                    event.setPublishedOn(LocalDateTime.now());
+            if (eventUpdateAdminRequest.getStateAction().equals(PUBLISH_EVENT)) {
+                if (event.getState() == EventState.PUBLISHED) {
+                    throw new ConflictException("Событие уже опубликовано и не может быть опубликовано повторно");
                 }
-                case REJECT_EVENT -> {
-                    if (event.getState() == EventState.PUBLISHED) {
-                        throw new ConflictException("Нельзя отклонить уже опубликованное событие");
-                    }
-                    if (event.getState() != EventState.PENDING) {
-                        throw new ConflictException("Отклонить можно только события в статусе PENDING");
-                    }
-                    event.setState(EventState.CANCELED);
+                if (event.getState() == EventState.CANCELED) {
+                    throw new ConflictException("Нельзя опубликовать отменённое событие");
                 }
+                if (event.getState() != EventState.PENDING) {
+                    throw new ConflictException("Публиковать можно только события в статусе PENDING");
+                }
+                event.setState(EventState.PUBLISHED);
+                event.setPublishedOn(LocalDateTime.now());
+            } else if (eventUpdateAdminRequest.getStateAction().equals(REJECT_EVENT)) {
+                if (event.getState() == EventState.PUBLISHED) {
+                    throw new ConflictException("Нельзя отклонить уже опубликованное событие");
+                }
+                if (event.getState() != EventState.PENDING) {
+                    throw new ConflictException("Отклонить можно только события в статусе PENDING");
+                }
+                event.setState(EventState.CANCELED);
             }
         }
+
         eventRepository.save(event);
 
         return eventMapper.toEventFullDto(event);
