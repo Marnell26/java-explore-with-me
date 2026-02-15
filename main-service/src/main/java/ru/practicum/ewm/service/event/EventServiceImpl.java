@@ -114,6 +114,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventUpdateAdminRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
@@ -165,6 +166,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto addEvent(Long userId, NewEventDto newEventDto) {
         User initiator = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
@@ -183,6 +185,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest eventUpdateUserRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
@@ -225,8 +228,16 @@ public class EventServiceImpl implements EventService {
             rangeStart = LocalDateTime.now();
         }
 
-        Sort springSort = Sort.by(sort).ascending();
-        Pageable pageable = PageRequest.of(from / size, size, springSort);
+        Pageable pageable;
+        if (sort == null) {
+            pageable = PageRequest.of(from / size, size, Sort.by("id").ascending());
+        } else if (sort.equalsIgnoreCase("VIEWS")) {
+            pageable = PageRequest.of(from / size, size, Sort.by("views").ascending());
+        } else if (sort.equalsIgnoreCase("EVENT_DATE")) {
+            pageable = PageRequest.of(from / size, size, Sort.by("eventDate").ascending());
+        } else {
+            throw new ValidationException("Указан некорректный вариант сортировки");
+        }
 
         List<Long> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
 
