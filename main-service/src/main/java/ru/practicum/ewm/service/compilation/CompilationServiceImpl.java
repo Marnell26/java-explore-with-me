@@ -71,7 +71,7 @@ public class CompilationServiceImpl implements CompilationService {
         if (pinned != null) {
             compilations = compilationRepository.findByPinned(pinned, pageable);
         } else {
-            compilations = compilationRepository.findAll();
+            compilations = compilationRepository.findAll(pageable).getContent();
         }
         return compilations.stream()
                 .map(compilationMapper::toCompilationDto)
