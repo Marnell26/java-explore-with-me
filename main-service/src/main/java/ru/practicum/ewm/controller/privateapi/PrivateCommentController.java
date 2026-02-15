@@ -25,8 +25,8 @@ public class PrivateCommentController {
 
     @PatchMapping("/{commentId}")
     public CommentDto updateComment(@PathVariable Long userId, @PathVariable Long commentId,
-                                    @RequestBody @Valid UpdateCommentDto updateCommentDto) {
-        return commentService.updateComment(userId, commentId, updateCommentDto);
+                                    @RequestBody @Valid NewCommentDto newCommentDto) {
+        return commentService.updateComment(userId, commentId, newCommentDto);
     }
 
     @DeleteMapping("/{commentId}")
