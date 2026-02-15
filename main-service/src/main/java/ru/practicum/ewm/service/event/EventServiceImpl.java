@@ -25,8 +25,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewm.model.EventStateAction.PUBLISH_EVENT;
-import static ru.practicum.ewm.model.EventStateAction.REJECT_EVENT;
+import static ru.practicum.ewm.model.EventStateAction.*;
 
 @Service
 @Transactional(readOnly = true)
@@ -203,9 +202,10 @@ public class EventServiceImpl implements EventService {
         eventMapper.updateUserEvent(eventUpdateUserRequest, event);
 
         if (eventUpdateUserRequest.getEventStateAction() != null) {
-            switch (eventUpdateUserRequest.getEventStateAction()) {
-                case SEND_TO_REVIEW -> event.setState(EventState.PENDING);
-                case CANCEL_REVIEW -> event.setState(EventState.CANCELED);
+            if (eventUpdateUserRequest.getEventStateAction().equals(SEND_TO_REVIEW)) {
+                event.setState(EventState.PENDING);
+            } else if (eventUpdateUserRequest.getEventStateAction().equals(CANCEL_REVIEW)) {
+                event.setState(EventState.CANCELED);
             }
         }
 
