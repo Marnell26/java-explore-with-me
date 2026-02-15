@@ -8,6 +8,8 @@ import ru.practicum.ewm.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
 
+import static ru.practicum.ewm.constant.Constants.DATE_TIME_FORMAT;
+
 @Getter
 @Setter
 @Builder
@@ -26,7 +28,7 @@ public class EventFullDto {
 
     private UserShortDto initiator;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime eventDate;
 
     private LocationDto location;
@@ -41,10 +43,10 @@ public class EventFullDto {
 
     private int confirmedRequests;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime createdOn;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
     private LocalDateTime publishedOn;
 
     private Long views;
