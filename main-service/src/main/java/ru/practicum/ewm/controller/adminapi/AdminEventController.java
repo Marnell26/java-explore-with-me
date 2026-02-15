@@ -9,13 +9,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.UpdateEventAdminRequest;
+import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/admin/events")
+@RequestMapping("/admin/events")
 @RequiredArgsConstructor
 @Validated
 public class AdminEventController {
@@ -23,7 +24,7 @@ public class AdminEventController {
 
     @GetMapping
     public List<EventFullDto> getAdminEvents(@RequestParam(required = false) List<Long> users,
-            @RequestParam(required = false) List<String> states,
+                                             @RequestParam(required = false) List<EventState> states,
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,

@@ -13,7 +13,7 @@ import ru.practicum.ewm.service.user.UserService;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/admin/users")
+@RequestMapping("/admin/users")
 @RequiredArgsConstructor
 @Validated
 public class AdminUserController {

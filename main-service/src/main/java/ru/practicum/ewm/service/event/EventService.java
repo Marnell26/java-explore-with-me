@@ -3,14 +3,15 @@ package ru.practicum.ewm.service.event;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.model.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventService {
 
-    List<EventFullDto> getAdminEvents(List<Long> userIds, List<String> states, List<Long> categories,
-            LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable);
+    List<EventFullDto> getAdminEvents(List<Long> userIds, List<EventState> states, List<Long> categories,
+                                      LocalDateTime rangeStart, LocalDateTime rangeEnd, Pageable pageable);
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest eventUpdateAdminRequest);
 

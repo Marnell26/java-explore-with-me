@@ -10,7 +10,7 @@ import ru.practicum.ewm.service.category.CategoryService;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/categories")
+@RequestMapping("/categories")
 @RequiredArgsConstructor
 @Validated
 public class PublicCategoryController {

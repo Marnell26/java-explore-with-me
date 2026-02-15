@@ -13,13 +13,14 @@ import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    List<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
-
     Optional<Event> findByIdAndInitiatorId(Long id, Long initiatorId);
+
+    Optional<Event> findByIdAndState(Long eventId, EventState state);
+
+    List<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
 
     List<Event> findByCategoryId(Long categoryId);
 
-    Optional<Event> findByIdAndState(long eventId, EventState state);
 
     @Query("SELECT e FROM Event e " +
             "WHERE (:users IS NULL OR e.initiator.id IN :users) " +
@@ -38,22 +39,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     @Query("SELECT e FROM Event e " +
-            "WHERE e.state = :state " +
-            "AND (:text IS NULL OR (LOWER(e.annotation) LIKE %:text% OR LOWER(e.description) LIKE %:text%)) " +
+            "WHERE e.state = ru.practicum.ewm.model.EventState.PUBLISHED " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +
-            "AND e.eventDate >= COALESCE(:rangeStart, e.eventDate) " +
-            "AND e.eventDate <= COALESCE(:rangeEnd, e.eventDate) " +
-            "AND (:onlyAvailable IS NULL OR :onlyAvailable = false OR COALESCE(e.participantLimit, 0) = 0 " +
-            "OR COALESCE(e.confirmedRequests, 0) < COALESCE(e.participantLimit, 0))")
+            "AND e.eventDate >= :rangeStart " +
+            "AND e.eventDate <= COALESCE(:rangeEnd, e.eventDate)")
     List<Event> findEvents(
-            @Param("text") String text,
             @Param("categories") List<Long> categories,
             @Param("paid") Boolean paid,
             @Param("rangeStart") LocalDateTime rangeStart,
             @Param("rangeEnd") LocalDateTime rangeEnd,
-            @Param("onlyAvailable") Boolean onlyAvailable,
-            @Param("state") EventState state,
             Pageable pageable
     );
 

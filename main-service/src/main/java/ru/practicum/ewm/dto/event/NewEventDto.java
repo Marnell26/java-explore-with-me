@@ -2,19 +2,18 @@ package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import ru.practicum.ewm.model.Location;
+import lombok.*;
+import ru.practicum.ewm.dto.Location.LocationDto;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class NewEventDto {
+
     @NotBlank
     @Size(min = 3, max = 120, message = "Краткое описание должно содержать от 3 до 120 символов")
     private String title;
@@ -36,7 +35,7 @@ public class NewEventDto {
     private LocalDateTime eventDate;
 
     @NotNull
-    private Location location;
+    private LocationDto location;
 
     @Builder.Default
     private Boolean paid = false;

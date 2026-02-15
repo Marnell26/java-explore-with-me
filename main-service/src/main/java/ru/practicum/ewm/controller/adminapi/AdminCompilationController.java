@@ -11,7 +11,7 @@ import ru.practicum.ewm.dto.compilation.UpdateCompilationDto;
 import ru.practicum.ewm.service.compilation.CompilationService;
 
 @RestController
-@RequestMapping(path = "/admin/compilations")
+@RequestMapping("/admin/compilations")
 @RequiredArgsConstructor
 @Validated
 public class AdminCompilationController {

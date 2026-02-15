@@ -10,7 +10,7 @@ import ru.practicum.ewm.dto.category.NewCategoryDto;
 import ru.practicum.ewm.service.category.CategoryService;
 
 @RestController
-@RequestMapping(path = "/admin/categories")
+@RequestMapping("/admin/categories")
 @RequiredArgsConstructor
 @Validated
 public class AdminCategoryController {

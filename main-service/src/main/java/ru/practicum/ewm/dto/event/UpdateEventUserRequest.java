@@ -3,16 +3,14 @@ package ru.practicum.ewm.dto.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import ru.practicum.ewm.dto.Location.LocationDto;
 import ru.practicum.ewm.model.EventStateAction;
-import ru.practicum.ewm.model.Location;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,14 +30,14 @@ public class UpdateEventUserRequest {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private Location location;
+    private LocationDto location;
 
     private Boolean paid;
 
     @PositiveOrZero
     private Integer participantLimit;
 
-    private boolean requestModeration;
+    private Boolean requestModeration;
 
     private EventStateAction eventStateAction;
 

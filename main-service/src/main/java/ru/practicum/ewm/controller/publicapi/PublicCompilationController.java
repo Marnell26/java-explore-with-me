@@ -10,7 +10,7 @@ import ru.practicum.ewm.service.compilation.CompilationService;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/compilations")
+@RequestMapping("/compilations")
 @RequiredArgsConstructor
 @Validated
 public class PublicCompilationController {
