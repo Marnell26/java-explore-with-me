@@ -30,7 +30,7 @@ public interface EventMapper {
             @Mapping(target = "publishedOn", ignore = true),
             @Mapping(target = "state", ignore = true)
     })
-    void updateAdminEvent(UpdateEventAdminRequest eventUpdateAdminRequest, @MappingTarget Event event);
+    void updateAdminEvent(UpdateEventAdminRequest UpdateEventAdminRequest, @MappingTarget Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mappings({

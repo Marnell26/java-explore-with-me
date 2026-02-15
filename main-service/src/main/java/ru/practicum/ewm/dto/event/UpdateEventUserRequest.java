@@ -39,6 +39,6 @@ public class UpdateEventUserRequest {
 
     private Boolean requestModeration;
 
-    private EventStateAction eventStateAction;
+    private EventStateAction stateAction;
 
 }

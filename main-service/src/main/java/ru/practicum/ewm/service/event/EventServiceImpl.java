@@ -19,6 +19,7 @@ import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
+import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
@@ -119,6 +120,14 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
 
+        if (eventUpdateAdminRequest.getEventDate() != null) {
+            if (eventUpdateAdminRequest.getEventDate().isBefore(LocalDateTime.now())) {
+                throw new ValidationException("Дата события не может быть в прошлом");
+            }
+        }
+
+        eventMapper.updateAdminEvent(eventUpdateAdminRequest, event);
+
         if (eventUpdateAdminRequest.getStateAction() != null) {
             if (eventUpdateAdminRequest.getStateAction().equals(PUBLISH_EVENT)) {
                 if (event.getState() == EventState.PUBLISHED) {
@@ -202,16 +211,22 @@ public class EventServiceImpl implements EventService {
             event.setCategory(category);
         }
 
-        eventMapper.updateUserEvent(eventUpdateUserRequest, event);
-
-        if (eventUpdateUserRequest.getEventStateAction() != null) {
-            if (eventUpdateUserRequest.getEventStateAction().equals(SEND_TO_REVIEW)) {
-                event.setState(EventState.PENDING);
-            } else if (eventUpdateUserRequest.getEventStateAction().equals(CANCEL_REVIEW)) {
-                event.setState(EventState.CANCELED);
+        if (eventUpdateUserRequest.getEventDate() != null) {
+            if (eventUpdateUserRequest.getEventDate().isBefore(LocalDateTime.now())) {
+                throw new ValidationException("Дата события не может быть в прошлом");
             }
         }
 
+        eventMapper.updateUserEvent(eventUpdateUserRequest, event);
+
+        if (eventUpdateUserRequest.getStateAction() != null) {
+            if (eventUpdateUserRequest.getStateAction().equals(SEND_TO_REVIEW)) {
+                event.setState(EventState.PENDING);
+            } else if (eventUpdateUserRequest.getStateAction().equals(CANCEL_REVIEW)) {
+                event.setState(EventState.CANCELED);
+            }
+        }
+        eventRepository.save(event);
         return eventMapper.toEventFullDto(event);
     }
 
@@ -238,6 +253,8 @@ public class EventServiceImpl implements EventService {
         } else {
             throw new ValidationException("Указан некорректный вариант сортировки");
         }
+
+        addHit(request);
 
         List<Long> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
 
@@ -335,6 +352,8 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Событие не найдено");
         }
 
+        addHit(request);
+
         EventFullDto eventFullDto = eventMapper.toEventFullDto(event);
 
         long confirmed = requestRepository.countByEventIdAndStatus(event.getId(), RequestStatus.CONFIRMED);
@@ -353,4 +372,16 @@ public class EventServiceImpl implements EventService {
 
         return eventFullDto;
     }
+
+    private void addHit(HttpServletRequest request) {
+        statsClient.addHit(
+                EndpointHitDto.builder()
+                        .uri(request.getRequestURI())
+                        .app(appName)
+                        .ip(request.getRemoteAddr())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
 }
