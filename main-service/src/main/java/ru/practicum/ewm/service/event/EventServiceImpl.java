@@ -116,8 +116,6 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
 
-        //  eventMapper.updateAdminEvent(eventUpdateAdminRequest, event);
-
         if (eventUpdateAdminRequest.getStateAction() != null) {
             switch (eventUpdateAdminRequest.getStateAction()) {
                 case PUBLISH_EVENT -> {
@@ -145,8 +143,6 @@ public class EventServiceImpl implements EventService {
             }
         }
         eventRepository.save(event);
-
-        List<Event> events = eventRepository.findAll();
 
         return eventMapper.toEventFullDto(event);
     }

@@ -55,8 +55,6 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Заявка на участие уже создана");
         }
 
-        List<Event> events = eventRepository.findAll();
-
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Нельзя участвовать в неопубликованном событии");
         }
