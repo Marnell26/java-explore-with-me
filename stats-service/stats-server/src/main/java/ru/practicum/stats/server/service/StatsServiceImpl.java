@@ -1,5 +1,6 @@
 package ru.practicum.stats.server.service;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,9 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-
+        if (start.isAfter(end)) {
+            throw new ValidationException("Даты окончания должна быть позднее даты начала");
+        }
         if (unique != null && unique) {
             return statsRepository.getUniqueStats(start, end, uris);
         }
