@@ -49,7 +49,7 @@ public class CommentServiceImpl implements CommentService {
         if (event.getState() != EventState.PUBLISHED) {
             throw new ForbiddenException("Комментировать можно только опубликованные события");
         }
-        Comment comment = commentMapper.toComment(newCommentDto, user, event);
+        Comment comment = commentMapper.toComment(newCommentDto, user, event, LocalDateTime.now());
         commentRepository.save(comment);
 
         return commentMapper.toCommentDto(comment);

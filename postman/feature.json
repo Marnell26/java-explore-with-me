@@ -78,22 +78,21 @@
           "raw": "{\n  \"text\": \"Отличное событие, всё прошло супер!\"\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{userId}}/events/{{eventId}}/comments",
+          "raw": "{{baseUrl}}/users/{{userId}}/comments/{{eventId}}",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "users",
             "{{userId}}",
-            "events",
-            "{{eventId}}",
-            "comments"
+            "comments",
+            "{{eventId}}"
           ]
         }
       }
     },
     {
-      "name": "2. Error: comment for unpublished event (409)",
+      "name": "2. Error: comment for unpublished event (403)",
       "event": [
         {
           "listen": "prerequest",
@@ -129,8 +128,8 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Статус 409', function () {",
-              "  pm.response.to.have.status(409);",
+              "pm.test('Статус 403', function () {",
+              "  pm.response.to.have.status(403);",
               "});"
             ]
           }
@@ -153,16 +152,15 @@
           "raw": "{\n  \"text\": \"Комментарий к неопубликованному событию\"\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{unpubUserId}}/events/{{unpubEventId}}/comments",
+          "raw": "{{baseUrl}}/users/{{unpubUserId}}/comments/{{unpubEventId}}",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "users",
             "{{unpubUserId}}",
-            "events",
-            "{{unpubEventId}}",
-            "comments"
+            "comments",
+            "{{unpubEventId}}"
           ]
         }
       }
@@ -183,8 +181,8 @@
               "    const category = await api.addCategory(rnd.getCategory());",
               "    let event = await api.addEvent(user.id, rnd.getEvent(category.id));",
               "    event = await api.publishEvent(event.id);",
-              "    await api.post('/users/' + user.id + '/events/' + event.id + '/comments', { text: 'Первый комментарий' });",
-              "    await api.post('/users/' + user.id + '/events/' + event.id + '/comments', { text: 'Второй комментарий' });",
+              "    await api.post('/users/' + user.id + '/comments/' + event.id, { text: 'Первый комментарий' });",
+              "    await api.post('/users/' + user.id + '/comments/' + event.id, { text: 'Второй комментарий' });",
               "    pm.collectionVariables.set('eventForListId', event.id);",
               "  } catch (err) {",
               "    console.error('Ошибка при подготовке тестовых данных', err);",
@@ -266,7 +264,7 @@
               "    const category = await api.addCategory(rnd.getCategory());",
               "    let event = await api.addEvent(user.id, rnd.getEvent(category.id));",
               "    event = await api.publishEvent(event.id);",
-              "    const comment = await api.post('/users/' + user.id + '/events/' + event.id + '/comments', { text: 'Старый текст' });",
+              "    const comment = await api.post('/users/' + user.id + '/comments/' + event.id, { text: 'Старый текст' });",
               "    pm.collectionVariables.set('updUserId', user.id);",
               "    pm.collectionVariables.set('updCommentId', comment.id);",
               "  } catch (err) {",
@@ -347,7 +345,7 @@
               "    const category = await api.addCategory(rnd.getCategory());",
               "    let event = await api.addEvent(user.id, rnd.getEvent(category.id));",
               "    event = await api.publishEvent(event.id);",
-              "    const comment = await api.post('/users/' + user.id + '/events/' + event.id + '/comments', { text: 'На удаление' });",
+              "    const comment = await api.post('/users/' + user.id + '/comments/' + event.id, { text: 'На удаление' });",
               "    pm.collectionVariables.set('delUserId', user.id);",
               "    pm.collectionVariables.set('delCommentId', comment.id);",
               "  } catch (err) {",
@@ -400,7 +398,7 @@
       }
     },
     {
-      "name": "6. Delete foreign comment must fail (404)",
+      "name": "6. Delete foreign comment must fail (403)",
       "event": [
         {
           "listen": "prerequest",
@@ -416,7 +414,7 @@
               "    const category = await api.addCategory(rnd.getCategory());",
               "    let event = await api.addEvent(owner.id, rnd.getEvent(category.id));",
               "    event = await api.publishEvent(event.id);",
-              "    const comment = await api.post('/users/' + owner.id + '/events/' + event.id + '/comments', { text: 'Чужой комментарий' });",
+              "    const comment = await api.post('/users/' + owner.id + '/comments/' + event.id, { text: 'Чужой комментарий' });",
               "    pm.collectionVariables.set('strangerId', stranger.id);",
               "    pm.collectionVariables.set('foreignCommentId', comment.id);",
               "  } catch (err) {",
@@ -439,8 +437,8 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('Статус 404 (нельзя удалить чужой)', function () {",
-              "  pm.response.to.have.status(404);",
+              "pm.test('Статус 403 (нельзя удалить чужой)', function () {",
+              "  pm.response.to.have.status(403);",
               "});"
             ]
           }
@@ -484,7 +482,7 @@
               "    const category = await api.addCategory(rnd.getCategory());",
               "    let event = await api.addEvent(user.id, rnd.getEvent(category.id));",
               "    event = await api.publishEvent(event.id);",
-              "    const comment = await api.post('/users/' + user.id + '/events/' + event.id + '/comments', { text: 'Для админ-удаления' });",
+              "    const comment = await api.post('/users/' + user.id + '/comments/' + event.id, { text: 'Для админ-удаления' });",
               "    pm.collectionVariables.set('adminCommentId', comment.id);",
               "  } catch (err) {",
               "    console.error('Ошибка при подготовке тестовых данных', err);",
@@ -596,16 +594,15 @@
           "raw": "{\n  \"text\": \"\"\n}"
         },
         "url": {
-          "raw": "{{baseUrl}}/users/{{badUserId}}/events/{{badEventId}}/comments",
+          "raw": "{{baseUrl}}/users/{{badUserId}}/comments/{{badEventId}}",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "users",
             "{{badUserId}}",
-            "events",
-            "{{badEventId}}",
-            "comments"
+            "comments",
+            "{{badEventId}}"
           ]
         }
       }

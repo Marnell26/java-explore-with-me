@@ -9,6 +9,8 @@ import ru.practicum.ewm.model.Comment;
 import ru.practicum.ewm.model.Event;
 import ru.practicum.ewm.model.User;
 
+import java.time.LocalDateTime;
+
 @Mapper(componentModel = "spring")
 public interface CommentMapper {
 
@@ -17,9 +19,10 @@ public interface CommentMapper {
             @Mapping(target = "text", source = "newCommentDto.text"),
             @Mapping(target = "author", source = "user"),
             @Mapping(target = "event", source = "event"),
-            @Mapping(target = "createdOn", expression = "java(LocalDateTime.now())")
+            @Mapping(target = "createdOn", source = "createdOn"),
+            @Mapping(target = "updatedOn", ignore = true)
     })
-    Comment toComment(NewCommentDto newCommentDto, User user, Event event);
+    Comment toComment(NewCommentDto newCommentDto, User user, Event event, LocalDateTime createdOn);
 
     CommentDto toCommentDto(Comment comment);
 

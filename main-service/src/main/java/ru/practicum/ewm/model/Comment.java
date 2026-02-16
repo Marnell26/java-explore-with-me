@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "categories")
+@Table(name = "comments")
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,9 @@ public class Comment {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
+    @Column(name = "created_on")
     private LocalDateTime createdOn;
 
+    @Column(name = "updated_on")
     private LocalDateTime updatedOn;
 }

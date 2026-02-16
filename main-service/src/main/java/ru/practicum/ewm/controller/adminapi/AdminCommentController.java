@@ -11,7 +11,7 @@ import ru.practicum.ewm.service.comment.CommentService;
 @RequiredArgsConstructor
 @Validated
 public class AdminCommentController {
-    private CommentService commentService;
+    private final CommentService commentService;
 
     @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
